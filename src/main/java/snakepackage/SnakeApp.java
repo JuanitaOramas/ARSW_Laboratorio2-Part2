@@ -45,6 +45,7 @@ public class SnakeApp {
     private JButton playButton;
     private JButton pauseButton;
     private JButton continueButton;
+    private JButton TextButton;
 
 
     public SnakeApp() {
@@ -68,6 +69,7 @@ public class SnakeApp {
         playButton = new JButton("Play ");
         pauseButton = new JButton("Pause ");
         continueButton = new JButton("Continue ");
+        TextButton = new JButton(" ");
 
         prepareActionGame();
 
@@ -75,6 +77,7 @@ public class SnakeApp {
         actionsPausePabel.add(playButton);
         actionsPausePabel.add(pauseButton);
         actionsPausePabel.add(continueButton);
+        actionsPausePabel.add(TextButton);
 
         frame.add(actionsPausePabel,BorderLayout.SOUTH);
 
@@ -160,6 +163,8 @@ public class SnakeApp {
         }
         System.out.println("SERPIENTE MAS GRANDE: " + snakeBodyGreat);
         System.out.println(Snake.snakeDead);
+        TextButton.setText("SERPIENTE MAS GRANDE: " + snakeBodyGreat + " / PEOR SERPIENTE: " + Snake.snakeDead );
+
     }
 
     private void playGame() {

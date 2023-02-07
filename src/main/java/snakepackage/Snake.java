@@ -346,6 +346,7 @@ public class Snake extends Observable implements Runnable {
     public void pauseGame() {
         this.pause = true;
     }
+
     public void continueSnake() {
         this.pause = false;
 
