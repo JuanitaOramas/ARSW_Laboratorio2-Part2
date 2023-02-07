@@ -15,17 +15,19 @@ public class Snake extends Observable implements Runnable {
     private LinkedList<Cell> snakeBody = new LinkedList<Cell>();
     //private Cell objective = null;
     private Cell start = null;
-
     private boolean snakeEnd = false;
-
     private int direction = Direction.NO_DIRECTION;
     private final int INIT_SIZE = 3;
-
     private boolean hasTurbo = false;
     private int jumps = 0;
     private boolean isSelected = false;
     private int growing = 0;
     public boolean goal = false;
+    private boolean pause = false;
+
+    private boolean firstDead = false;
+    public static int snakeDead = 0;
+
 
     public Snake(int idt, Cell head, int direction) {
         this.idt = idt;
@@ -47,24 +49,43 @@ public class Snake extends Observable implements Runnable {
 
     @Override
     public void run() {
+
         while (!snakeEnd) {
-            
-            snakeCalc();
 
-            //NOTIFY CHANGES TO GUI
-            setChanged();
-            notifyObservers();
-
-            try {
-                if (hasTurbo == true) {
-                    Thread.sleep(500 / 3);
-                } else {
-                    Thread.sleep(500);
+            if(pause) {
+                synchronized (this ) {
+                    try {
+                        this.wait();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
 
+            synchronized (snakeBody) {
+                head = snakeBody.peekFirst();
+            }
+            newCell = head;
+            newCell = changeDirection(newCell);
+            randomMovement(newCell);
+
+            synchronized (newCell){
+                snakeCalc();
+
+                //NOTIFY CHANGES TO GUI
+                setChanged();
+                notifyObservers();
+
+                try {
+                    if (hasTurbo == true) {
+                        Thread.sleep(20 / 3);
+                    } else {
+                        Thread.sleep(20);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         
         fixDirection(head);
@@ -73,28 +94,25 @@ public class Snake extends Observable implements Runnable {
     }
 
     private void snakeCalc() {
-        head = snakeBody.peekFirst();
-
-        newCell = head;
-
-        newCell = changeDirection(newCell);
-        
-        randomMovement(newCell);
 
         checkIfFood(newCell);
         checkIfJumpPad(newCell);
         checkIfTurboBoost(newCell);
         checkIfBarrier(newCell);
-        
-        snakeBody.push(newCell);
 
-        if (growing <= 0) {
-            newCell = snakeBody.peekLast();
-            snakeBody.remove(snakeBody.peekLast());
-            Board.gameboard[newCell.getX()][newCell.getY()].freeCell();
-        } else if (growing != 0) {
-            growing--;
+        synchronized (snakeBody) {
+            snakeBody.push(newCell);
+
+            if (growing <= 0) {
+                newCell = snakeBody.peekLast();
+                snakeBody.remove(snakeBody.peekLast());
+                Board.gameboard[newCell.getX()][newCell.getY()].freeCell();
+            } else if (growing != 0) {
+                growing--;
+            }
+
         }
+
 
     }
 
@@ -104,6 +122,10 @@ public class Snake extends Observable implements Runnable {
             System.out.println("[" + idt + "] " + "CRASHED AGAINST BARRIER "
                     + newCell.toString());
             snakeEnd=true;
+            if (!firstDead) {
+                firstDead = true;
+                snakeDead = idt;
+            }
         }
     }
 
@@ -321,19 +343,23 @@ public class Snake extends Observable implements Runnable {
         }
     }
 
-    /*public void setObjective(Cell c) {
-        System.out.println("Setting objective - " + c.getX() + ":" + c.getY()
-                + " for Snake" + this.idt);
-        this.objective = c;
-    }*/
+    public void pauseGame() {
+        this.pause = true;
+    }
+    public void continueSnake() {
+        this.pause = false;
+
+        synchronized (this) {this.notifyAll();}
+    }
+
 
     public LinkedList<Cell> getBody() {
         return this.snakeBody;
     }
 
-    public boolean isSelected() {
-        return isSelected;
-    }
+    public boolean isSelected() {return isSelected;}
+
+
 
     public void setSelected(boolean isSelected) {
         this.isSelected = isSelected;

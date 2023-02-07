@@ -8,6 +8,8 @@ import javax.swing.JFrame;
 import enums.GridSize;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
@@ -20,6 +22,8 @@ import javax.swing.JPanel;
 public class SnakeApp {
 
     private static SnakeApp app;
+    private boolean startGame = false;
+
     public static final int MAX_THREADS = 8;
     Snake[] snakes = new Snake[MAX_THREADS];
     private static final Cell[] spawn = {
@@ -38,6 +42,11 @@ public class SnakeApp {
     int nr_selected = 0;
     Thread[] thread = new Thread[MAX_THREADS];
 
+    private JButton playButton;
+    private JButton pauseButton;
+    private JButton continueButton;
+
+
     public SnakeApp() {
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
         frame = new JFrame("The Snake Race");
@@ -53,12 +62,48 @@ public class SnakeApp {
         
         frame.add(board,BorderLayout.CENTER);
         
-        JPanel actionsBPabel=new JPanel();
-        actionsBPabel.setLayout(new FlowLayout());
-        actionsBPabel.add(new JButton("Action "));
-        frame.add(actionsBPabel,BorderLayout.SOUTH);
+        JPanel actionsPausePabel=new JPanel();
+        actionsPausePabel.setLayout(new FlowLayout());
+
+        playButton = new JButton("Play ");
+        pauseButton = new JButton("Pause ");
+        continueButton = new JButton("Continue ");
+
+        prepareActionGame();
+
+
+        actionsPausePabel.add(playButton);
+        actionsPausePabel.add(pauseButton);
+        actionsPausePabel.add(continueButton);
+
+        frame.add(actionsPausePabel,BorderLayout.SOUTH);
+
 
     }
+
+    public void prepareActionGame() {
+        playButton.addActionListener( new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                playGame();
+            }
+        });
+
+        pauseButton.addActionListener( new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                pausedGame();
+            }
+        });
+//
+        continueButton.addActionListener( new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                continueGame();
+            }
+        });
+
+
+    }
+
+
 
     public static void main(String[] args) {
         app = new SnakeApp();
@@ -74,12 +119,13 @@ public class SnakeApp {
             snakes[i] = new Snake(i + 1, spawn[i], i + 1);
             snakes[i].addObserver(board);
             thread[i] = new Thread(snakes[i]);
-            thread[i].start();
+//            thread[i].start();
         }
 
         frame.setVisible(true);
 
-            
+        // esta muerta la serpiente?
+
         while (true) {
             int x = 0;
             for (int i = 0; i != MAX_THREADS; i++) {
@@ -87,9 +133,7 @@ public class SnakeApp {
                     x++;
                 }
             }
-            if (x == MAX_THREADS) {
-                break;
-            }
+            if (x == MAX_THREADS) {break;}
         }
 
 
@@ -104,5 +148,35 @@ public class SnakeApp {
     public static SnakeApp getApp() {
         return app;
     }
+
+    // pause, play , continue
+
+    public void pausedGame() {
+
+        int snakeBodyGreat = 0;
+        for (int i = 0; i != MAX_THREADS; i++) {
+            snakes[i].pauseGame();
+            if (snakes[i].getBody().size() > snakeBodyGreat) snakeBodyGreat = snakes[i].getBody().size();
+        }
+        System.out.println("SERPIENTE MAS GRANDE: " + snakeBodyGreat);
+        System.out.println(Snake.snakeDead);
+    }
+
+    private void playGame() {
+        if (!startGame) {
+            for (int i = 0; i != MAX_THREADS; i++) {
+                thread[i].start();
+            }
+            this.startGame = true;
+        }
+    }
+
+
+    public void continueGame(){
+        for (int i = 0; i != MAX_THREADS; i++) {
+            snakes[i].continueSnake();
+        }
+    }
+
 
 }
